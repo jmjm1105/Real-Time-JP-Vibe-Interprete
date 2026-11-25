@@ -490,14 +490,14 @@ if st.button("🚀 통역 판정하기!", type="primary", use_container_width=Tr
             delta=f"Lv.{difficulty_level} 난이도 반영"
         )
 
-        # 결과 3: 4. 반복문 (for)을 활용한 실전 뉘앙스 비교표 (DataFrame)
-        st.markdown(f"#### 📊 [{scene_type}] 난이도별 실전 뉘앙스 비교표")
+        # 결과 3: 4. 반복문 (for)을 활용한 현재 문장 실전 뉘앙스 비교표 (DataFrame)
+        st.markdown("#### 📊 방금 푼 문장 실전 뉘앙스 비교")
         table_rows = []
         for item in live_phrases:
-            if item["scene"] == scene_type:
+            if item["jp"] == current_phrase["jp"]:
                 table_rows.append({
-                    "난이도": f"Lv.{item['level']}",
                     "현장 일본어": item["jp"],
+                    "내 통역 답변": user_answer,
                     "직역 (딱딱함)": item["literal"],
                     "통역사 추천 (살아있는 표현)": item["pro"]
                 })
