@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import random
 
 # 페이지 기본 설정
 st.set_page_config(page_title="현장 통역 순발력 챌린지", page_icon="🎤", layout="centered")
@@ -423,30 +422,33 @@ with col2:
 
 st.caption(f"🎯 현재 선택된 난이도: **{LEVEL_LABELS[difficulty_level]}**")
 
-# 선택한 상황과 난이도에 일치하는 문제 후보군 추출
+# 선택한 상황과 난이도에 모두 일치하는 문제 필터링
 filtered_phrases = [
     p for p in live_phrases
     if p["scene"] == scene_type and p["level"] == difficulty_level
 ]
 
-# 상황이나 난이도가 바뀌면 랜덤으로 새 문제 뽑기
+# 세션 상태를 이용해 현재 문제 유지 및 변경
+if "current_idx" not in st.session_state:
+    st.session_state.current_idx = 0
+
+# 상황이나 난이도가 바뀌면 문제 번호 초기화
 if (
-    "current_phrase" not in st.session_state
-    or st.session_state.get("last_scene") != scene_type
+    st.session_state.get("last_scene") != scene_type
     or st.session_state.get("last_level") != difficulty_level
 ):
-    st.session_state.current_phrase = random.choice(filtered_phrases)
+    st.session_state.current_idx = 0
     st.session_state.last_scene = scene_type
     st.session_state.last_level = difficulty_level
 
-current_phrase = st.session_state.current_phrase
+q_num = (st.session_state.current_idx % len(filtered_phrases)) + 1
+current_phrase = filtered_phrases[st.session_state.current_idx % len(filtered_phrases)]
 
 # 제시어 박스 출력
-st.info(f"🎧 **[랜덤 현장 음성 수신 - Lv.{difficulty_level}]**\n\n### 「 {current_phrase['jp']} 」")
+st.info(f"🎧 **[현장 음성 수신 #{q_num}/{len(filtered_phrases)} - Lv.{difficulty_level}]**\n\n### 「 {current_phrase['jp']} 」")
 
-if st.button("🎲 다른 랜덤 멘트 듣기"):
-    other_phrases = [p for p in filtered_phrases if p["jp"] != current_phrase["jp"]]
-    st.session_state.current_phrase = random.choice(other_phrases)
+if st.button("🔄 같은 난이도의 다른 멘트 듣기"):
+    st.session_state.current_idx += 1
     st.rerun()
 
 # (3) 내 순발력 답변 입력
@@ -488,8 +490,8 @@ if st.button("🚀 통역 판정하기!", type="primary", use_container_width=Tr
             delta=f"Lv.{difficulty_level} 난이도 반영"
         )
 
-        # 결과 3: 4. 반복문 (for)을 활용한 방금 제시된 1문장 실전 뉘앙스 비교표
-        st.markdown("#### 📊 제시된 문장 실전 뉘앙스 비교")
+        # 결과 3: 4. 반복문 (for)을 활용한 제시된 문장 실전 뉘앙스 비교표 (DataFrame)
+        st.markdown("#### 📊 제시된 문장 실전 뉘앙스 비교표")
         table_rows = []
         for item in live_phrases:
             if item["jp"] == current_phrase["jp"]:
@@ -500,9 +502,6 @@ if st.button("🚀 통역 판정하기!", type="primary", use_container_width=Tr
                     "통역사 추천 (살아있는 표현)": item["pro"]
                 })
                 break
-
-        df = pd.DataFrame(table_rows)
-        st.dataframe(df, use_container_width=True, hide_index=True)
 
         df = pd.DataFrame(table_rows)
         st.dataframe(df, use_container_width=True, hide_index=True)
